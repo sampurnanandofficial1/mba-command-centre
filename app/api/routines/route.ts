@@ -1,5 +1,4 @@
 import { getRawDb } from "../../../db";
-import { getChatGPTUser } from "../../chatgpt-auth";
 
 const defaults=[
   {name:"Meditation",time:"07:00"},{name:"Walking",time:"07:30"},{name:"Breakfast",time:"09:00"},
@@ -20,8 +19,6 @@ async function ensureDefinitions(db:D1Database){
 }
 
 export async function GET(request:Request){
-  const user=await getChatGPTUser();
-  if(!user) return Response.json({error:"Unauthorized"},{status:401});
   try{
     const db=getRawDb();await ensureDefinitions(db);
     const date=new URL(request.url).searchParams.get("date")??new Date().toISOString().slice(0,10);
@@ -35,8 +32,6 @@ export async function GET(request:Request){
 }
 
 export async function POST(request:Request){
-  const user=await getChatGPTUser();
-  if(!user) return Response.json({error:"Unauthorized"},{status:401});
   try{
     const db=getRawDb();const body=await request.json() as {action?:string;routine?:string;date?:string;complete?:boolean;name?:string;time?:string};
     if(body.action==="create"){
@@ -55,8 +50,6 @@ export async function POST(request:Request){
 }
 
 export async function PATCH(request:Request){
-  const user=await getChatGPTUser();
-  if(!user) return Response.json({error:"Unauthorized"},{status:401});
   try{
     const db=getRawDb();const {id,name,time}=await request.json() as {id:number;name:string;time:string};
     const cleanName=String(name??"").trim(),cleanTime=String(time??"").trim();
@@ -75,8 +68,6 @@ export async function PATCH(request:Request){
 }
 
 export async function DELETE(request:Request){
-  const user=await getChatGPTUser();
-  if(!user) return Response.json({error:"Unauthorized"},{status:401});
   try{
     const db=getRawDb();const id=Number(new URL(request.url).searchParams.get("id"));
     if(!id)return Response.json({error:"Habit id is required"},{status:400});
