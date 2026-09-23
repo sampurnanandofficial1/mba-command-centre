@@ -15,8 +15,22 @@
     <link rel="stylesheet" href="./jarvis-kpi-pulse.css">
     <link rel="stylesheet" href="./jarvis-hud-background.css">
     <link rel="stylesheet" href="./jarvis-telemetry.css">
+    <link rel="stylesheet" href="./jarvis-boot.css">
   </head>
   <body>
+    <!-- Boot sequence overlay - shows once per session, sits on top of everything -->
+    <div class="jarvis-boot" id="jarvis-boot">
+      <div class="jarvis-boot-core">
+        <div class="jarvis-boot-ring"></div>
+        <div class="jarvis-boot-ring jarvis-boot-ring--2"></div>
+        <div class="jarvis-boot-dot"></div>
+      </div>
+      <div class="jarvis-boot-title">J.A.R.V.I.S.</div>
+      <div class="jarvis-boot-sub">MBA COMMAND CORE</div>
+      <div class="jarvis-boot-log" id="jarvis-boot-log"></div>
+      <div class="jarvis-boot-bar"><div class="jarvis-boot-bar-fill"></div></div>
+    </div>
+
     <!-- HUD layers live OUTSIDE #root so React never wipes them -->
     <div class="jarvis-particles" aria-hidden="true"></div>
 
@@ -37,7 +51,7 @@
       <div class="jarvis-telemetry-log"></div>
     </div>
 
-    <!-- React mounts here — left empty, React owns everything inside -->
+    <!-- React mounts here - left empty, React owns everything inside -->
     <div id="root"></div>
 
     <!-- original app bundle -->
@@ -47,5 +61,6 @@
     <script type="module" src="./jarvis-kpi-watch.js"></script>
     <script type="module" src="./jarvis-telemetry.js"></script>
     <script type="module" src="./jarvis-interact.js"></script>
+    <script type="module" src="./jarvis-boot.js"></script>
   </body>
 </html>
