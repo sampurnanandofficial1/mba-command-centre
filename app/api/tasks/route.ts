@@ -1,5 +1,4 @@
 import { getRawDb } from "../../../db";
-import { getChatGPTUser } from "../../chatgpt-auth";
 
 const editable = ["task","category","subcategory","parent_activity","context","priority","status","date_created","start_date","deadline","deadline_time","deadline_tbd","fixed_event","event_date","event_time","estimated_hours","actual_hours","next_action","waiting_for","follow_up_date","assigned_by","team_members","deliverable","stage","venue","link","notes","complete","completion_date","deadline_reliability"] as const;
 
@@ -16,8 +15,6 @@ async function removeDemoTasksAndRenumber(db:D1Database) {
 }
 
 export async function GET() {
-  const user=await getChatGPTUser();
-  if(!user) return Response.json({error:"Unauthorized"},{status:401});
   try {
     const db=getRawDb(); await removeDemoTasksAndRenumber(db);
     const result=await db.prepare("SELECT * FROM tasks ORDER BY task_id").all();
@@ -26,8 +23,6 @@ export async function GET() {
 }
 
 export async function POST(request:Request) {
-  const user=await getChatGPTUser();
-  if(!user) return Response.json({error:"Unauthorized"},{status:401});
   try {
     const db=getRawDb(); await removeDemoTasksAndRenumber(db); const body=await request.json() as Record<string,unknown>;
     if(!String(body.task??"").trim()) return Response.json({error:"Task is required"},{status:400});
@@ -44,8 +39,6 @@ export async function POST(request:Request) {
 }
 
 export async function PATCH(request:Request) {
-  const user=await getChatGPTUser();
-  if(!user) return Response.json({error:"Unauthorized"},{status:401});
   try {
     const db=getRawDb(); const body=await request.json() as Record<string,unknown>; const taskId=String(body.task_id??"");
     if(!taskId) return Response.json({error:"task_id is required"},{status:400});
