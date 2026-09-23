@@ -1,0 +1,60 @@
+/* =========================================================
+   J.A.R.V.I.S. Command Centre — KPI reactive glow pulse
+   Flashes a bright glow on a .kpi strong value the moment its
+   text content changes (task completed, count updated, etc).
+   Purely additive — append to jarvis-overrides.css or link
+   as its own file after it.
+   ========================================================= */
+
+.kpi strong,
+.master-count strong,
+.progress-kpi strong {
+  transition: text-shadow 0.15s ease, color 0.15s ease;
+}
+
+.kpi-pulse strong,
+.master-count-pulse strong,
+.progress-kpi-pulse strong {
+  animation: kpi-glow-pulse 0.9s ease-out;
+}
+
+@keyframes kpi-glow-pulse {
+  0% {
+    text-shadow: 0 0 4px currentColor;
+  }
+  25% {
+    text-shadow: 0 0 18px currentColor, 0 0 40px currentColor;
+    color: #eafeff;
+  }
+  100% {
+    text-shadow: 0 0 4px currentColor;
+  }
+}
+
+/* A brief ring flash on the whole KPI card, not just the number */
+.kpi.jarvis-flash,
+.progress-kpi.jarvis-flash {
+  animation: kpi-card-flash 0.9s ease-out;
+}
+
+@keyframes kpi-card-flash {
+  0% {
+    box-shadow: inset 0 0 18px currentColor, 0 0 0px currentColor;
+  }
+  30% {
+    box-shadow: inset 0 0 30px currentColor, 0 0 24px currentColor;
+  }
+  100% {
+    box-shadow: inset 0 0 18px #10ddff0b, 0 0 0px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-pulse strong,
+  .master-count-pulse strong,
+  .progress-kpi-pulse strong,
+  .kpi.jarvis-flash,
+  .progress-kpi.jarvis-flash {
+    animation: none !important;
+  }
+}
