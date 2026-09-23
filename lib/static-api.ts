@@ -15,6 +15,8 @@ const defaultRoutines: RoutineDefinition[] = [
   { id: 6, name: "Dinner", time: "21:00", sort_order: 5 },
 ];
 
+import { cloudRoutines, cloudTasks, getCloudUserSync, isCloudConfigured, primeCloudUser } from "./cloud-sync";
+
 declare global { interface Window { __JARVIS_STATIC__?: boolean } }
 
 function read<T>(key: string, fallback: T): T {
@@ -91,6 +93,13 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
   const raw = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
   if (typeof window === "undefined" || !window.__JARVIS_STATIC__ || !raw.startsWith("/api/")) return fetch(input, init);
   const url = new URL(raw, window.location.origin);
+  if (isCloudConfigured()) {
+    const user = getCloudUserSync() ?? await primeCloudUser();
+    if (user) {
+      if (url.pathname === "/api/tasks") return cloudTasks(init);
+      if (url.pathname === "/api/routines") return cloudRoutines(url, init);
+    }
+  }
   if (url.pathname === "/api/tasks") return staticTasks(init);
   if (url.pathname === "/api/routines") return staticRoutines(url, init);
   return json({ error: "Not found" }, 404);
