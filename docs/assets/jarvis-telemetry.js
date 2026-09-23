@@ -1,23 +1,22 @@
 /**
- * J.A.R.V.I.S. Command Centre — telemetry driver
- * Populates .jarvis-telemetry with a live clock, a slowly
- * drifting "coordinate" readout, and a typed system-log line
- * that cycles through short status messages — purely cosmetic,
- * no real data — to sell the "operating interface" feel.
+ * J.A.R.V.I.S. Command Centre — telemetry driver (v2)
+ * Same clock + coords readout as before, but the scrolling log
+ * now reflects REAL numbers already rendered on the page (KPI
+ * cards, master task count, overdue count) instead of fake
+ * status strings. It reads the DOM directly - no access to your
+ * React state/store is needed.
  *
- * Usage: <script type="module" src="./jarvis-telemetry.js"></script>
+ * It looks for text inside elements matching:
+ *   .master-count strong       -> total tasks
+ *   .kpi.red strong             -> overdue (best-effort by color class)
+ *   .kpi.green strong           -> completed (best-effort)
+ *   .overdue-count               -> sidebar badge, fallback source
+ * If a selector isn't found, that line is simply skipped -
+ * nothing breaks, it just shows fewer lines.
+ *
+ * Usage: <script type="module" src="./jarvis-telemetry.js">
  * after the .jarvis-telemetry element exists in the DOM.
  */
-
-const LOG_MESSAGES = [
-  "SYSTEM NOMINAL // ALL MODULES ONLINE",
-  "SYNCING TASK MATRIX...",
-  "CALENDAR LINK STABLE",
-  "HABIT TRACKER: NO ANOMALIES",
-  "RUNNING BACKGROUND DIAGNOSTICS...",
-  "MEMORY INDEX OPTIMAL",
-  "STANDING BY FOR INPUT",
-];
 
 function pad(n) {
   return n.toString().padStart(2, "0");
@@ -48,7 +47,42 @@ function startCoords(el) {
   setInterval(tick, 400);
 }
 
-function typeLine(el, text, speed = 28) {
+function readNumber(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return null;
+  const match = el.textContent.match(/-?\d+(\.\d+)?/);
+  return match ? match[0] : null;
+}
+
+function buildStatusLines() {
+  const lines = [];
+
+  const total = readNumber(".master-count strong");
+  if (total !== null) lines.push(`TASK MATRIX: ${total} TOTAL ENTRIES`);
+
+  const overdue =
+    readNumber(".kpi.red strong") ?? readNumber(".overdue-count");
+  if (overdue !== null) lines.push(`OVERDUE FLAGS: ${overdue}`);
+
+  const completed = readNumber(".kpi.green strong");
+  if (completed !== null) lines.push(`COMPLETED: ${completed} LOGGED`);
+
+  const amber = readNumber(".kpi.amber strong");
+  if (amber !== null) lines.push(`PENDING REVIEW: ${amber}`);
+
+  const purple = readNumber(".kpi.purple strong");
+  if (purple !== null) lines.push(`IN PROGRESS: ${purple}`);
+
+  if (!lines.length) {
+    lines.push("SYSTEM NOMINAL // AWAITING TASK DATA");
+  } else {
+    lines.push("ALL MODULES SYNCED");
+  }
+
+  return lines;
+}
+
+function typeLine(el, text, speed = 26) {
   return new Promise((resolve) => {
     let i = 0;
     el.textContent = "";
@@ -74,11 +108,11 @@ function typeLine(el, text, speed = 28) {
 async function startLog(el) {
   if (!el) return;
   let idx = 0;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
-    await typeLine(el, LOG_MESSAGES[idx % LOG_MESSAGES.length]);
+    const lines = buildStatusLines();
+    await typeLine(el, lines[idx % lines.length]);
     idx++;
-    await new Promise((r) => setTimeout(r, 2400));
+    await new Promise((r) => setTimeout(r, 2600));
   }
 }
 
