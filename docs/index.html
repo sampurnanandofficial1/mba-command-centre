@@ -6,42 +6,46 @@
     <meta name="theme-color" content="#02070d" />
     <link rel="icon" href="./favicon.svg" />
     <title>J.A.R.V.I.S. MBA Task Core</title>
-    <script type="module" crossorigin src="/mba-command-centre/assets/index-DcrtnBFE.js"></script>
-    <link rel="stylesheet" href="./jarvis-overrides.css">
+
+    <!-- original app assets -->
     <link rel="stylesheet" crossorigin href="/mba-command-centre/assets/index-CWko_d4q.css">
+
+    <!-- JARVIS visual overlay layers -->
     <link rel="stylesheet" href="./jarvis-overrides.css">
     <link rel="stylesheet" href="./jarvis-kpi-pulse.css">
     <link rel="stylesheet" href="./jarvis-hud-background.css">
     <link rel="stylesheet" href="./jarvis-telemetry.css">
   </head>
-  <body>    
-    <div id="root">
-  <div class="jarvis-particles">
-      <link rel="stylesheet" href="./jarvis-overrides.css">
-      <link rel="stylesheet" href="./jarvis-kpi-pulse.css">
-      <script type="module" src="./jarvis-kpi-watch.js"></script>
-    </div>
-  <div class="jarvis-hud-bg" aria-hidden="true">
-    <div class="jarvis-hex-grid"></div>
-    <div class="jarvis-ring jarvis-ring--outer"></div>
-    <div class="jarvis-ring jarvis-ring--inner"></div>
-    <div class="jarvis-reticle"></div>
-    <div class="jarvis-corner jarvis-corner--tl"></div>
-    <div class="jarvis-corner jarvis-corner--tr"></div>
-    <div class="jarvis-corner jarvis-corner--bl"></div>
-    <div class="jarvis-corner jarvis-corner--br"></div>
-  </div>
-  <div class="jarvis-telemetry" aria-hidden="true">
-    <div class="jarvis-telemetry-line" data-role="clock"></div>
-    <div class="jarvis-telemetry-line" data-role="coords"></div>
-    <div class="jarvis-telemetry-log"></div>
-  </div>
-  <!-- React app mounts here as before -->
-</div>
+  <body>
+    <!-- HUD layers live OUTSIDE #root so React never wipes them -->
+    <div class="jarvis-particles" aria-hidden="true"></div>
 
-<script type="module" src="./jarvis-kpi-watch.js"></script>
-<script type="module" src="./jarvis-telemetry.js"></script>
-<script type="module" src="./jarvis-interact.js"></script>
-    <!-- app renders here -->
-</body>
+    <div class="jarvis-hud-bg" aria-hidden="true">
+      <div class="jarvis-hex-grid"></div>
+      <div class="jarvis-ring jarvis-ring--outer"></div>
+      <div class="jarvis-ring jarvis-ring--inner"></div>
+      <div class="jarvis-reticle"></div>
+      <div class="jarvis-corner jarvis-corner--tl"></div>
+      <div class="jarvis-corner jarvis-corner--tr"></div>
+      <div class="jarvis-corner jarvis-corner--bl"></div>
+      <div class="jarvis-corner jarvis-corner--br"></div>
+    </div>
+
+    <div class="jarvis-telemetry" aria-hidden="true">
+      <div class="jarvis-telemetry-line" data-role="clock"></div>
+      <div class="jarvis-telemetry-line" data-role="coords"></div>
+      <div class="jarvis-telemetry-log"></div>
+    </div>
+
+    <!-- React mounts here — left empty, React owns everything inside -->
+    <div id="root"></div>
+
+    <!-- original app bundle -->
+    <script type="module" crossorigin src="/mba-command-centre/assets/index-DcrtnBFE.js"></script>
+
+    <!-- JARVIS interaction scripts -->
+    <script type="module" src="./jarvis-kpi-watch.js"></script>
+    <script type="module" src="./jarvis-telemetry.js"></script>
+    <script type="module" src="./jarvis-interact.js"></script>
+  </body>
 </html>
