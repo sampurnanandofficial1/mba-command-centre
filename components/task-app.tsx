@@ -49,6 +49,10 @@ const categories = ["Case Competition","Classes","Exams","Research","Placements"
 const priorities = ["P0","P1","P2","P3"];
 const statuses = ["Not Started","In Progress","Waiting","Blocked","Submitted","Completed","Cancelled"];
 const expectedCalendarAccount="pgp41221@iiml.ac.in";
+const fallbackGoogleCalendars = [
+  ["IIM Lucknow",expectedCalendarAccount,"#9fe1e7"],
+  ["Holidays in India","en.indian#holiday@group.v.calendar.google.com","#16a765"],
+] as const;
 const calendarApiBase=String((import.meta.env as unknown as Record<string,string|undefined>).VITE_CALENDAR_API_URL??"").replace(/\/$/,"");
 const calendarSessionKey="jarvis_calendar_session";
 // The full 365-day, Dharma-centred rotation lives in lib/gita-quotes.ts.
@@ -177,22 +181,15 @@ function TodayView({quote,today,dueToday,overdue,upcoming,top3,routineState,rout
 
 function CalendarEventItem({event}:{event:CalendarEvent}){const content=<><span className="event-color" style={{background:event.color}}/><span className="event-time">{calendarTime(event.start,event.allDay)}</span><strong>{event.title}</strong><small>{event.calendarName}{event.location?` · ${event.location}`:""}</small></>;return event.htmlLink?<a className="native-calendar-event" href={event.htmlLink} target="_blank" rel="noreferrer">{content}<ExternalLink/></a>:<div className="native-calendar-event">{content}</div>}
 function GoogleCalendarPanel({mode,date,title,calendar,onOpenSettings}:{mode:"AGENDA"|"WEEK"|"MONTH";date?:string;title:string;calendar:CalendarState;onOpenSettings:()=>void}){
-  const focus=date??indiaToday();
-  let content:React.ReactNode;
-  if(!calendar.configured)content=<div className="calendar-setup"><ShieldCheck/><div><strong>Calendar service is being configured</strong><p>The protected Railway sync endpoint is not available in this build yet.</p></div><Button onClick={onOpenSettings}><Settings2/>Open settings</Button></div>;
-  else if(!calendar.connected)content=<div className="calendar-setup"><LogIn/><div><strong>Unlock private calendar</strong><p>{calendar.error||`Enter the JARVIS site access code to display every calendar connected to ${expectedCalendarAccount}. No Google sign-in is required after the one-time administrator setup.`}</p></div><Button onClick={()=>void calendar.connect()} disabled={calendar.loading}>{calendar.loading?"Unlocking…":"Enter Access Code"}</Button></div>;
-  else if(calendar.loading&&!calendar.events.length)content=<div className="calendar-loading"><RefreshCw/><span>Synchronizing your Google calendars…</span></div>;
-  else if(mode==="AGENDA"){
-    const dayEvents=calendar.events.filter(event=>calendarDate(event.start)===focus);
-    content=<div className="calendar-agenda">{dayEvents.length?dayEvents.map(event=><CalendarEventItem key={event.id} event={event}/>):<Empty label="No Google Calendar events today"/>}</div>;
-  }else if(mode==="WEEK"){
-    const first=startOfWeek(focus);const days=Array.from({length:7},(_,i)=>addDays(first,i));
-    content=<div className="native-week">{days.map(day=><section key={day} className={day===focus?"week-day current":"week-day"}><header><span>{new Intl.DateTimeFormat("en",{weekday:"short"}).format(new Date(day+"T12:00:00Z"))}</span><strong>{new Date(day+"T12:00:00Z").getUTCDate()}</strong></header><div>{calendar.events.filter(event=>calendarDate(event.start)===day).map(event=><CalendarEventItem key={event.id} event={event}/>)}</div></section>)}</div>;
-  }else{
-    const monthStart=focus.slice(0,7)+"-01";const first=startOfWeek(monthStart);const days=Array.from({length:42},(_,i)=>addDays(first,i));
-    content=<div className="native-month"><div className="month-weekdays">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(day=><span key={day}>{day}</span>)}</div><div className="month-grid">{days.map(day=>{const items=calendar.events.filter(event=>calendarDate(event.start)===day);return <section key={day} className={`${day.slice(0,7)!==focus.slice(0,7)?"outside ":""}${day===focus?"current":""}`}><header>{new Date(day+"T12:00:00Z").getUTCDate()}</header>{items.slice(0,3).map(event=><a key={event.id} href={event.htmlLink||undefined} target={event.htmlLink?"_blank":undefined} rel="noreferrer" style={{borderLeftColor:event.color}}><span>{calendarTime(event.start,event.allDay)}</span>{event.title}</a>)}{items.length>3?<small>+{items.length-3} more</small>:null}</section>})}</div></div>;
-  }
-  return <Card className="google-calendar-card"><CardHeader><div><span className="calendar-live"><i/>LIVE GOOGLE CALENDAR</span><CardTitle>{title}</CardTitle><small className="calendar-access-note">{calendar.connected?`${calendar.account} · ${calendar.calendars} calendar${calendar.calendars===1?"":"s"} · Updated ${calendar.lastSync?new Intl.DateTimeFormat("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(calendar.lastSync ?? undefined):"now"}`:`Access-code protected · ${expectedCalendarAccount}`}</small></div><div className="calendar-actions"><span>{calendar.connected?"Auto-refreshes every 60 sec":"Private access"}</span>{calendar.connected?<><Button size="sm" variant="outline" onClick={()=>void calendar.refresh()} disabled={calendar.loading}><RefreshCw/>Refresh</Button><Button size="sm" variant="outline" onClick={calendar.disconnect}>Lock</Button></>:null}<Button size="sm" variant="outline" asChild><a href={`https://calendar.google.com/calendar/r?authuser=${expectedCalendarAccount}`} target="_blank" rel="noreferrer"><ExternalLink/>Open Google</a></Button></div></CardHeader><CardContent>{content}</CardContent></Card>;
+  const [embedRefresh,setEmbedRefresh]=React.useState(()=>Date.now());
+  React.useEffect(()=>{const timer=window.setInterval(()=>setEmbedRefresh(Date.now()),60000);return()=>window.clearInterval(timer)},[]);
+  const embedParams=new URLSearchParams({height:"720",wkst:"2",bgcolor:"#02070d",ctz:"Asia/Kolkata",showTitle:"0",showNav:"1",showDate:"1",showPrint:"0",showTabs:"0",showCalendars:"0",mode,authuser:expectedCalendarAccount});
+  fallbackGoogleCalendars.forEach(([,id,color])=>{embedParams.append("src",id);embedParams.append("color",color)});
+  if(date)embedParams.set("dates",`${date.replaceAll("-","")}/${addDays(date,1).replaceAll("-","")}`);
+  embedParams.set("cache",String(embedRefresh));
+  const embedSrc=`https://calendar.google.com/calendar/embed?${embedParams.toString()}`;
+  void calendar;void onOpenSettings;
+  return <Card className="google-calendar-card"><CardHeader><div><span className="calendar-live"><i/>IIML GOOGLE CALENDAR</span><CardTitle>{title}</CardTitle><small className="calendar-access-note">Primary: {expectedCalendarAccount} · India holidays remain as the universal fallback</small></div><div className="calendar-actions"><span>Temporary embedded view · refreshes every 60 sec</span><Button size="sm" variant="outline" onClick={()=>setEmbedRefresh(Date.now())}><RefreshCw/>Refresh</Button><Button size="sm" variant="outline" asChild><a href={`https://calendar.google.com/calendar/r?authuser=${expectedCalendarAccount}`} target="_blank" rel="noreferrer"><ExternalLink/>Open Google</a></Button></div></CardHeader><CardContent><iframe key={embedRefresh} className="google-calendar-frame" title={title} src={embedSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade"/></CardContent></Card>;
 }
 
 function WeeklyView({tasks,today,calendar,onOpenSettings}:{tasks:Task[];today:string;calendar:CalendarState;onOpenSettings:()=>void}){return <section className="page-stack"><TaskList title="Next 7 days" subtitle="MASTER TASKS and live Google Calendar activity in one weekly command view." tasks={tasks} today={today}/><GoogleCalendarPanel mode="WEEK" date={today} title="Live weekly schedule" calendar={calendar} onOpenSettings={onOpenSettings}/></section>}
