@@ -5,8 +5,8 @@ A high-tech, dark-themed personal productivity system for MBA tasks, habits, dea
 ## Live release
 
 - **GitHub Pages:** https://sampurnanandofficial1.github.io/mba-command-centre/
-- **Release:** v1.0.0 — GitHub Pages Edition
-- **Released:** 23 September 2026
+- **Release:** v1.1.0 — Secure Calendar Sync
+- **Released:** 26 September 2026
 
 ## Latest updates
 
@@ -15,7 +15,9 @@ A high-tech, dark-themed personal productivity system for MBA tasks, habits, dea
 - Added browser-based persistence for MASTER TASKS, completion status, editable habits, and 30-day habit history.
 - Preserved the single-source-of-truth architecture: tasks are created and edited only in MASTER TASKS; every other view is generated automatically.
 - Preserved the JARVIS interface, voice task capture, 365-day Dharma-focused Gita rotation, analytics, archive, and responsive mobile layout.
-- Preserved live Google Calendar views through Google Calendar embeds and browser-side Google integration.
+- Added live daily, weekly, and monthly Google Calendar views for `pgp41221@iiml.ac.in`.
+- Added a private access-code gate so additional browsers do not require repeated Google sign-in.
+- Added a Railway OAuth backend with encrypted, persistent calendar credentials and automatic 60-second refresh.
 
 ## Data model on GitHub Pages
 
@@ -38,6 +40,9 @@ The production-ready static output is generated in `docs/` and is published from
 - `github-pages/` — static Vite entry point
 - `docs/` — deployable GitHub Pages build
 
-## Privacy
+## Calendar security
 
-No API key, OAuth secret, personal task database, or personal access token is included in the repository. Google OAuth client IDs are public identifiers and, when used, are stored only in the visitor's browser.
+No API key, OAuth secret, calendar access code, refresh credential, personal
+task database, or personal access token is included in the repository. Full
+calendar data is returned only to browsers holding a valid encrypted access
+session. Google authorization is restricted to `pgp41221@iiml.ac.in`.
