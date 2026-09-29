@@ -5,11 +5,14 @@ A high-tech, dark-themed personal productivity system for MBA tasks, habits, dea
 ## Live release
 
 - **GitHub Pages:** https://sampurnanandofficial1.github.io/mba-command-centre/
-- **Release:** v1.1.0 — Secure Calendar Sync
-- **Released:** 26 September 2026
+- **Release:** v1.2.0 — Adaptive 8–8–8 Time Planner
+- **Released:** 29 September 2026
 
 ## Latest updates
 
+- Added an editable daily Time Planner generated from the IIM Lucknow Term V class schedule.
+- Added 8–8–8 balance indicators, 15-minute transition protection, meal windows, class-linked self-study demand, case-competition/CFA phases, and visible conflict alerts.
+- Algo Investing stays hidden before its configurable post-midterm activation date.
 - Migrated the live frontend to GitHub Pages.
 - Removed the ChatGPT Sites runtime dependency from the GitHub release.
 - Added browser-based persistence for MASTER TASKS, completion status, editable habits, and 30-day habit history.
@@ -37,6 +40,7 @@ The production-ready static output is generated in `docs/` and is published from
 - `components/task-app.tsx` — application UI and generated views
 - `lib/static-api.ts` — GitHub Pages local-storage persistence adapter
 - `lib/gita-quotes.ts` — 365-day Dharma-focused verse rotation
+- `lib/time-planner.ts` — class recurrence, 8–8–8 allocation, meals, focus phases, and scheduling diagnostics
 - `github-pages/` — static Vite entry point
 - `docs/` — deployable GitHub Pages build
 
