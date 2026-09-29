@@ -11,6 +11,8 @@ A high-tech, dark-themed personal productivity system for MBA tasks, habits, dea
 ## Latest updates
 
 - Added an editable daily Time Planner generated from the IIM Lucknow Term V class schedule.
+- Integrated the timetable into Today, Weekly View, and the monthly Calendar instead of keeping it as a separate destination.
+- Added a cookie-persisted portal password screen for browser-level access convenience.
 - Added 8–8–8 balance indicators, 15-minute transition protection, meal windows, class-linked self-study demand, case-competition/CFA phases, and visible conflict alerts.
 - Algo Investing stays hidden before its configurable post-midterm activation date.
 - Migrated the live frontend to GitHub Pages.
