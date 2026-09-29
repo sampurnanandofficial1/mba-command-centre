@@ -19,7 +19,7 @@ const dateAdd=(date:string,count:number)=>{const d=new Date(date+"T12:00:00Z");d
 const formatDate=(date:string)=>new Intl.DateTimeFormat("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(new Date(date+"T12:00:00Z"));
 const emptyItem=(date:string):PlannerItem=>({id:`custom-${date}-${Date.now()}`,title:"",start:"09:00",end:"10:00",kind:"other",note:""});
 
-export function TimePlanner({today}:{today:string}){
+export function TimePlanner({today,embedded=false}:{today:string;embedded?:boolean}){
   const [date,setDate]=React.useState(today);
   const [settings,setSettings]=React.useState<PlannerSettings>(defaultPlannerSettings);
   const [overrides,setOverrides]=React.useState<Record<string,PlannerItem[]>>({});
@@ -38,8 +38,8 @@ export function TimePlanner({today}:{today:string}){
   const saveItem=(item:PlannerItem)=>{if(!item.title.trim()||item.end<=item.start){toast.error("Add a title and make the end time later than the start time.");return}setOverrides(old=>({...old,[date]:(old[date]??generated.items).filter(x=>x.id!==item.id).concat(item).sort((a,b)=>a.start.localeCompare(b.start))}));setEditor(null);toast.success("Planner updated for this day")};
   const remove=(id:string)=>setOverrides(old=>({...old,[date]:(old[date]??generated.items).filter(x=>x.id!==id)}));
   const reset=()=>{setOverrides(old=>{const next={...old};delete next[date];return next});toast.success("Restored the automatic plan for this day")};
-  return <section className="page-stack planner-page">
-    <div className="page-intro"><div><span className="eyebrow">8–8–8 DAILY OPERATING SYSTEM</span><h2>Adaptive time planner</h2><p>Classes are blocked from your Term V timetable. Remaining time is assigned to focused work, study recovery, meals and personal time.</p></div><Badge variant="outline">TERM V · {generated.dayName}</Badge></div>
+  return <section className={`page-stack planner-page${embedded?" planner-embedded":""}`}>
+    <div className="page-intro"><div><span className="eyebrow">8–8–8 DAILY OPERATING SYSTEM</span><h2>{embedded?"Today’s time plan":"Adaptive time planner"}</h2><p>Classes are blocked from your Term V timetable. Remaining time is assigned to focused work, study recovery, meals and personal time.</p></div><Badge variant="outline">TERM V · {generated.dayName}</Badge></div>
     <div className="planner-toolbar"><Button variant="outline" size="icon" onClick={()=>setDate(dateAdd(date,-1))}><ChevronLeft/></Button><Input aria-label="Planner date" type="date" value={date} onChange={e=>setDate(e.target.value)}/><Button variant="outline" size="icon" onClick={()=>setDate(dateAdd(date,1))}><ChevronRight/></Button><Button variant="outline" onClick={()=>setDate(today)}><CalendarClock/>Today</Button><Button variant="outline" onClick={reset}><RotateCcw/>Reset day</Button><Button onClick={()=>setEditor(emptyItem(date))}><Plus/>Add block</Button></div>
     <div className="planner-layout">
       <div className="planner-main">
@@ -57,6 +57,25 @@ export function TimePlanner({today}:{today:string}){
     </div>
     <ActivityEditor value={editor} onClose={()=>setEditor(null)} onSave={saveItem}/>
   </section>;
+}
+
+function usePlannerSnapshot(){
+  const [settings,setSettings]=React.useState<PlannerSettings>(defaultPlannerSettings);
+  const [overrides,setOverrides]=React.useState<Record<string,PlannerItem[]>>({});
+  React.useEffect(()=>{try{const saved=localStorage.getItem(settingsKey),days=localStorage.getItem(overridesKey);if(saved)setSettings({...defaultPlannerSettings,...JSON.parse(saved)});if(days)setOverrides(JSON.parse(days))}catch{}},[]);
+  return {settings,overrides};
+}
+
+export function PlannerWeekOverview({today}:{today:string}){
+  const {settings,overrides}=usePlannerSnapshot();
+  const days=Array.from({length:7},(_,i)=>dateAdd(today,i));
+  return <Card className="planner-overview"><CardHeader><div><span className="eyebrow">INTEGRATED 8–8–8 TIMETABLE</span><CardTitle>Seven-day execution plan</CardTitle><span className="micro">Classes, meals, focus phases and study blocks · edit rules or blocks from Today</span></div><Badge variant="outline">7 DAYS</Badge></CardHeader><CardContent><div className="planner-week-grid">{days.map(date=>{const generated=generateDayPlan(date,settings);const items=overrides[date]??generated.items;return <article className={date===today?"planner-week-day today":"planner-week-day"} key={date}><header><span>{new Intl.DateTimeFormat("en-IN",{weekday:"short"}).format(new Date(date+"T12:00:00Z"))}</span><strong>{new Date(date+"T12:00:00Z").getUTCDate()}</strong></header><div>{items.map(item=><div className={`planner-mini ${item.kind}`} key={item.id}><time>{item.start}</time><i/><span>{item.title}</span></div>)}</div><footer><span>{generated.metrics.work.toFixed(1)}h work</span><span>{generated.metrics.other.toFixed(1)}h other</span></footer></article>})}</div></CardContent></Card>;
+}
+
+export function PlannerMonthOverview({today}:{today:string}){
+  const {settings,overrides}=usePlannerSnapshot();
+  const days=Array.from({length:30},(_,i)=>dateAdd(today,i));
+  return <Card className="planner-overview planner-month"><CardHeader><div><span className="eyebrow">30-DAY PLANNER MAP</span><CardTitle>Academic and focus timetable</CardTitle><span className="micro">Key timetable blocks appear here; full daily detail remains on Today.</span></div><Badge variant="outline">30 DAYS</Badge></CardHeader><CardContent><div className="planner-month-grid">{days.map(date=>{const generated=generateDayPlan(date,settings);const all=overrides[date]??generated.items;const keyItems=all.filter(item=>item.kind==="class"||item.kind==="focus");return <article className={date===today?"planner-month-day today":"planner-month-day"} key={date}><header><span>{new Intl.DateTimeFormat("en-IN",{weekday:"short"}).format(new Date(date+"T12:00:00Z"))}</span><strong>{new Date(date+"T12:00:00Z").getUTCDate()}</strong></header><div>{keyItems.slice(0,5).map(item=><div className={`planner-mini ${item.kind}`} key={item.id}><time>{item.start}</time><span>{item.title}</span></div>)}</div><footer>{all.length} total blocks</footer></article>})}</div></CardContent></Card>;
 }
 
 function BalanceCard({label,hours,target,tone}:{label:string;hours:number;target:number;tone:string}){const percentage=Math.min(100,hours/target*100);const variance=hours-target;return <Card className={`balance-card ${tone}`}><span>{label}</span><strong>{hours.toFixed(1)}<small> / {target}h</small></strong><div><i style={{width:`${percentage}%`}}/></div><small>{Math.abs(variance)<.05?"On target":variance>0?`${variance.toFixed(1)}h over target`:`${Math.abs(variance).toFixed(1)}h available`}</small></Card>}
