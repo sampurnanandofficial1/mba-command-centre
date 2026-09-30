@@ -5,14 +5,14 @@ A high-tech, dark-themed personal productivity system for MBA tasks, habits, dea
 ## Live release
 
 - **GitHub Pages:** https://sampurnanandofficial1.github.io/mba-command-centre/
-- **Release:** v1.2.0 — Adaptive 8–8–8 Time Planner
-- **Released:** 29 September 2026
+- **Release:** v1.3.0 — Public Command Centre
+- **Released:** 30 September 2026
 
 ## Latest updates
 
 - Added an editable daily Time Planner generated from the IIM Lucknow Term V class schedule.
 - Integrated the timetable into Today, Weekly View, and the monthly Calendar instead of keeping it as a separate destination.
-- Added a cookie-persisted portal password screen for browser-level access convenience.
+- Removed the portal password so the command centre opens directly on every browser.
 - Added 8–8–8 balance indicators, 15-minute transition protection, meal windows, class-linked self-study demand, case-competition/CFA phases, and visible conflict alerts.
 - Algo Investing stays hidden before its configurable post-midterm activation date.
 - Migrated the live frontend to GitHub Pages.
@@ -21,8 +21,10 @@ A high-tech, dark-themed personal productivity system for MBA tasks, habits, dea
 - Preserved the single-source-of-truth architecture: tasks are created and edited only in MASTER TASKS; every other view is generated automatically.
 - Preserved the JARVIS interface, voice task capture, 365-day Dharma-focused Gita rotation, analytics, archive, and responsive mobile layout.
 - Added live daily, weekly, and monthly Google Calendar views for `pgp41221@iiml.ac.in`.
-- Added a private access-code gate so additional browsers do not require repeated Google sign-in.
+- Made read-only Google Calendar views publicly available without a browser access code or Google sign-in.
 - Added a Railway OAuth backend with encrypted, persistent calendar credentials and automatic 60-second refresh.
+- Restored server-rendered Google Calendar events in Today, Weekly View, and Calendar; the temporary public iframe fallback is no longer used.
+- Google authorization remains a one-time administrator operation restricted to `pgp41221@iiml.ac.in`; visitors receive read-only event data directly.
 
 ## Data model on GitHub Pages
 
@@ -46,9 +48,9 @@ The production-ready static output is generated in `docs/` and is published from
 - `github-pages/` — static Vite entry point
 - `docs/` — deployable GitHub Pages build
 
-## Calendar security
+## Calendar access
 
-No API key, OAuth secret, calendar access code, refresh credential, personal
-task database, or personal access token is included in the repository. Full
-calendar data is returned only to browsers holding a valid encrypted access
-session. Google authorization is restricted to `pgp41221@iiml.ac.in`.
+No API key, OAuth secret, refresh credential, personal task database, or personal
+access token is included in the repository. Calendar event details are public
+and read-only. Google authorization and credential replacement remain restricted
+to the administrator flow for `pgp41221@iiml.ac.in`.
