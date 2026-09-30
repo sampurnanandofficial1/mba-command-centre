@@ -1,9 +1,8 @@
 # JARVIS Calendar OAuth Service
 
-Private Google Calendar proxy for the GitHub Pages tracker. Google authorization
-is completed once by `pgp41221@iiml.ac.in`. Afterwards, browsers use the
-separate JARVIS site access code and receive a seven-day encrypted session.
-Full event data is never returned without a valid session.
+Public read-only Google Calendar proxy for the GitHub Pages tracker. Google
+authorization is completed once by `pgp41221@iiml.ac.in`; afterwards, calendar
+event details are returned directly to the tracker without visitor authentication.
 
 Required Railway variables:
 
@@ -13,7 +12,7 @@ Required Railway variables:
 - `FRONTEND_URL=https://sampurnanandofficial1.github.io/mba-command-centre/`
 - `SESSION_SECRET` (random, at least 32 bytes)
 - `ENCRYPTION_KEY` (random, at least 32 bytes)
-- `ACCESS_CODE` (the private code used to unlock calendar views)
+- `ACCESS_CODE` (administrator-only protection for replacing the OAuth connection)
 - `CONNECTION_FILE=/data/google-connection.enc`
 
 Attach a persistent Railway volume mounted at `/data`. The encrypted Google
@@ -23,5 +22,6 @@ Google OAuth redirect URI:
 
 `$PUBLIC_BASE_URL/auth/google/callback`
 
-The frontend never contains the access code, Google client secret, or refresh
-credential.
+The frontend never contains the administrator access code, Google client secret,
+or refresh credential. The `/api/events` response is intentionally public and
+read-only.
