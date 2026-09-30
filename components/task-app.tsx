@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from "recharts";
-import { Activity, Archive, BarChart3, BookOpen, BriefcaseBusiness, CalendarDays, CheckCircle2, ChevronRight, CircleAlert, ClipboardList, Clock3, Cpu, ExternalLink, FlaskConical, GraduationCap, LayoutDashboard, LogIn, Mic, Pencil, Plus, Radio, RefreshCw, Search, Settings2, ShieldCheck, Sparkles, Trash2, Trophy, Waves, X } from "lucide-react";
+import { Activity, Archive, BarChart3, BookOpen, BriefcaseBusiness, CalendarDays, CheckCircle2, ChevronRight, CircleAlert, ClipboardList, Clock3, Cpu, ExternalLink, FlaskConical, GraduationCap, LayoutDashboard, Mic, Pencil, Plus, Radio, RefreshCw, Search, Settings2, Sparkles, Trash2, Trophy, Waves, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,12 +50,7 @@ const categories = ["Case Competition","Classes","Exams","Research","Placements"
 const priorities = ["P0","P1","P2","P3"];
 const statuses = ["Not Started","In Progress","Waiting","Blocked","Submitted","Completed","Cancelled"];
 const expectedCalendarAccount="pgp41221@iiml.ac.in";
-const fallbackGoogleCalendars = [
-  ["IIM Lucknow",expectedCalendarAccount,"#9fe1e7"],
-  ["Holidays in India","en.indian#holiday@group.v.calendar.google.com","#16a765"],
-] as const;
-const calendarApiBase=String((import.meta.env as unknown as Record<string,string|undefined>).VITE_CALENDAR_API_URL??"").replace(/\/$/,"");
-const calendarSessionKey="jarvis_calendar_session";
+const calendarApiBase=String((import.meta.env as unknown as Record<string,string|undefined>).VITE_CALENDAR_API_URL??"https://calendar-api-production-d886.up.railway.app").replace(/\/$/,"");
 // The full 365-day, Dharma-centred rotation lives in lib/gita-quotes.ts.
 const nav: {group:string; items:{id:View; label:string; icon:React.ComponentType<{className?:string}>}[]}[] = [
   {group:"FOCUS",items:[{id:"today",label:"Today",icon:LayoutDashboard},{id:"weekly",label:"Weekly View",icon:CalendarDays},{id:"calendar",label:"Calendar",icon:Clock3},{id:"analytics",label:"Analytics",icon:BarChart3}]},
@@ -97,43 +92,24 @@ function useGoogleCalendar(today:string):CalendarState{
   const [loading,setLoading]=React.useState(false);
   const [error,setError]=React.useState("");
   const [lastSync,setLastSync]=React.useState<number|null>(null);
-  const readSession=React.useCallback(()=>typeof window==="undefined"?"":window.localStorage.getItem(calendarSessionKey)??"",[]);
   const sync=React.useCallback(async()=>{
-    const session=readSession();
-    if(!calendarApiBase||!session){setConnected(false);setEvents([]);setCalendars(0);return}
+    if(!calendarApiBase){setConnected(false);setEvents([]);setCalendars(0);return}
     setLoading(true);setError("");
     try{
       const timeMin=new Date(addDays(today,-35)+"T00:00:00+05:30").toISOString();
       const timeMax=new Date(addDays(today,70)+"T23:59:59+05:30").toISOString();
       const params=new URLSearchParams({timeMin,timeMax,timeZone:"Asia/Kolkata"});
-      const response=await globalThis.fetch(`${calendarApiBase}/api/events?${params}`,{headers:{Authorization:`Bearer ${session}`}});
-      const data=await response.json() as {events?:CalendarEvent[];calendars?:number;account?:string;sessionToken?:string;error?:string};
-      if(response.status===401){window.localStorage.removeItem(calendarSessionKey);throw new Error("Your secure calendar session expired. Connect again.")}
+      const response=await globalThis.fetch(`${calendarApiBase}/api/events?${params}`);
+      const data=await response.json() as {events?:CalendarEvent[];calendars?:number;account?:string;error?:string};
       if(!response.ok)throw new Error(data.error||"Google Calendar could not be synchronized.");
-      if(data.sessionToken)window.localStorage.setItem(calendarSessionKey,data.sessionToken);
       setEvents((data.events??[]).sort((a,b)=>a.start.localeCompare(b.start)));setCalendars(data.calendars??0);setAccount(data.account??expectedCalendarAccount);setConnected(true);setLastSync(Date.now());
     }catch(e){setConnected(false);setEvents([]);setCalendars(0);setError(e instanceof Error?e.message:"Google Calendar could not be synchronized.")}
     finally{setLoading(false)}
-  },[readSession,today]);
+  },[today]);
   const refresh=React.useCallback(async()=>{await sync()},[sync]);
-  const connect=React.useCallback(async()=>{
-    if(!calendarApiBase){setError("The secure calendar service is not configured yet.");return}
-    const accessCode=window.prompt("Enter the JARVIS calendar access code");
-    if(!accessCode)return;
-    setLoading(true);setError("");
-    try{
-      const response=await globalThis.fetch(`${calendarApiBase}/api/unlock`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accessCode})});
-      const data=await response.json() as {sessionToken?:string;error?:string};
-      if(!response.ok||!data.sessionToken)throw new Error(data.error||"Calendar access could not be unlocked.");
-      window.localStorage.setItem(calendarSessionKey,data.sessionToken);
-      const health=await globalThis.fetch(`${calendarApiBase}/health`).then(r=>r.json()) as {connected?:boolean};
-      if(!health.connected){window.location.assign(`${calendarApiBase}/auth/google?access_code=${encodeURIComponent(accessCode)}`);return}
-      await sync();
-    }catch(e){setError(e instanceof Error?e.message:"Calendar access could not be unlocked.")}
-    finally{setLoading(false)}
-  },[sync]);
-  const disconnect=React.useCallback(()=>{window.localStorage.removeItem(calendarSessionKey);setConnected(false);setAccount("");setEvents([]);setCalendars(0);setLastSync(null);setError("")},[]);
-  React.useEffect(()=>{const hash=new URLSearchParams(window.location.hash.replace(/^#/,""));const connectedNow=hash.get("calendar_connected");const oauthError=hash.get("calendar_error");if(connectedNow){window.history.replaceState(null,"",window.location.pathname+window.location.search);setError("Google Calendar is connected. Enter the site access code once to unlock this browser.")}if(oauthError){setError(decodeURIComponent(oauthError));window.history.replaceState(null,"",window.location.pathname+window.location.search)}void sync()},[sync]);
+  const connect=React.useCallback(async()=>{await sync()},[sync]);
+  const disconnect=React.useCallback(()=>{setConnected(false);setAccount("");setEvents([]);setCalendars(0);setLastSync(null);setError("")},[]);
+  React.useEffect(()=>{const hash=new URLSearchParams(window.location.hash.replace(/^#/,""));const oauthError=hash.get("calendar_error");if(hash.has("calendar_connected")||oauthError)window.history.replaceState(null,"",window.location.pathname+window.location.search);if(oauthError)setError(decodeURIComponent(oauthError));void sync()},[sync]);
   React.useEffect(()=>{if(!connected)return;const timer=window.setInterval(()=>{void refresh()},60000);return()=>window.clearInterval(timer)},[connected,refresh]);
   return {configured:Boolean(calendarApiBase),connected,account,events,calendars,loading,error,lastSync,connect,disconnect,refresh};
 }
@@ -159,16 +135,7 @@ function parseVoiceTask(command:string,today:string):Partial<Task>{
 function PriorityBadge({value}:{value:string}){const v=value||"P2";return <Badge className={`priority ${v.toLowerCase()}`}>{v}</Badge>}
 function StatusBadge({value}:{value:string}){const v=value||"Not Started";return <Badge variant="outline" className={`status status-${v.toLowerCase().replaceAll(" ","-")}`}>{v}</Badge>}
 
-const portalCookie="jarvis_portal_access";
-const portalPassword="12345678";
-function hasPortalAccess(){return typeof document!=="undefined"&&document.cookie.split(";").some(part=>part.trim()===`${portalCookie}=granted`)}
-
 export function TaskApp(){
-  const [unlocked,setUnlocked]=React.useState(()=>hasPortalAccess());
-  const [password,setPassword]=React.useState("");
-  const [invalid,setInvalid]=React.useState(false);
-  const unlock=(event:React.FormEvent)=>{event.preventDefault();if(password!==portalPassword){setInvalid(true);setPassword("");return}document.cookie=`${portalCookie}=granted; Max-Age=31536000; Path=/; SameSite=Lax${location.protocol==="https:"?"; Secure":""}`;setUnlocked(true)};
-  if(!unlocked)return <main className="portal-lock"><div className="lock-grid"/><section className="lock-panel"><div className="lock-reactor"><span/></div><span className="eyebrow">J.A.R.V.I.S. SECURE ACCESS</span><h1>Command Centre locked</h1><p>Enter the portal password to initialize your private productivity interface on this browser.</p><form onSubmit={unlock}><Label htmlFor="portal-password">Portal password</Label><Input id="portal-password" type="password" inputMode="numeric" autoComplete="current-password" value={password} onChange={e=>{setPassword(e.target.value);setInvalid(false)}} autoFocus placeholder="Enter access code" aria-invalid={invalid}/>{invalid?<small className="lock-error">Access denied. Check the password and try again.</small>:null}<Button type="submit"><ShieldCheck/>Unlock portal</Button></form><footer><i/>COOKIE SESSION · THIS BROWSER WILL BE REMEMBERED</footer></section></main>;
   return <TaskAppCore/>;
 }
 
@@ -195,15 +162,13 @@ function TodayView({quote,today,dueToday,overdue,upcoming,top3,routineState,rout
 
 function CalendarEventItem({event}:{event:CalendarEvent}){const content=<><span className="event-color" style={{background:event.color}}/><span className="event-time">{calendarTime(event.start,event.allDay)}</span><strong>{event.title}</strong><small>{event.calendarName}{event.location?` · ${event.location}`:""}</small></>;return event.htmlLink?<a className="native-calendar-event" href={event.htmlLink} target="_blank" rel="noreferrer">{content}<ExternalLink/></a>:<div className="native-calendar-event">{content}</div>}
 function GoogleCalendarPanel({mode,date,title,calendar,onOpenSettings}:{mode:"AGENDA"|"WEEK"|"MONTH";date?:string;title:string;calendar:CalendarState;onOpenSettings:()=>void}){
-  const [embedRefresh,setEmbedRefresh]=React.useState(()=>Date.now());
-  React.useEffect(()=>{const timer=window.setInterval(()=>setEmbedRefresh(Date.now()),60000);return()=>window.clearInterval(timer)},[]);
-  const embedParams=new URLSearchParams({height:"720",wkst:"2",bgcolor:"#02070d",ctz:"Asia/Kolkata",showTitle:"0",showNav:"1",showDate:"1",showPrint:"0",showTabs:"0",showCalendars:"0",mode,authuser:expectedCalendarAccount});
-  fallbackGoogleCalendars.forEach(([,id,color])=>{embedParams.append("src",id);embedParams.append("color",color)});
-  if(date)embedParams.set("dates",`${date.replaceAll("-","")}/${addDays(date,1).replaceAll("-","")}`);
-  embedParams.set("cache",String(embedRefresh));
-  const embedSrc=`https://calendar.google.com/calendar/embed?${embedParams.toString()}`;
-  void calendar;void onOpenSettings;
-  return <Card className="google-calendar-card"><CardHeader><div><span className="calendar-live"><i/>IIML GOOGLE CALENDAR</span><CardTitle>{title}</CardTitle><small className="calendar-access-note">Primary: {expectedCalendarAccount} · India holidays remain as the universal fallback</small></div><div className="calendar-actions"><span>Temporary embedded view · refreshes every 60 sec</span><Button size="sm" variant="outline" onClick={()=>setEmbedRefresh(Date.now())}><RefreshCw/>Refresh</Button><Button size="sm" variant="outline" asChild><a href={`https://calendar.google.com/calendar/r?authuser=${expectedCalendarAccount}`} target="_blank" rel="noreferrer"><ExternalLink/>Open Google</a></Button></div></CardHeader><CardContent><iframe key={embedRefresh} className="google-calendar-frame" title={title} src={embedSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade"/></CardContent></Card>;
+  const focus=date??indiaToday();
+  const start=mode==="AGENDA"?focus:mode==="WEEK"?startOfWeek(focus):`${focus.slice(0,7)}-01`;
+  const end=mode==="AGENDA"?addDays(start,1):mode==="WEEK"?addDays(start,7):addDays(start,42);
+  const visible=calendar.events.filter(event=>{const day=calendarDate(event.start);return day>=start&&day<end});
+  const weekDays=Array.from({length:7},(_,i)=>addDays(start,i));
+  const content=mode==="WEEK"?<div className="native-week">{weekDays.map(day=><section className={day===focus?"week-day current":"week-day"} key={day}><header><span>{new Intl.DateTimeFormat("en-IN",{weekday:"short"}).format(new Date(day+"T12:00:00Z"))}</span><strong>{Number(day.slice(8))}</strong></header><div>{visible.filter(event=>calendarDate(event.start)===day).map(event=><CalendarEventItem event={event} key={event.id}/>)}{visible.every(event=>calendarDate(event.start)!==day)?<Empty label="No events"/>:null}</div></section>)}</div>:<div className="calendar-agenda">{visible.length?visible.map(event=><CalendarEventItem event={event} key={event.id}/>):<Empty label="No Google Calendar events in this period"/>}</div>;
+  return <Card className="google-calendar-card"><CardHeader><div><span className="calendar-live"><i/>LIVE GOOGLE CALENDAR</span><CardTitle>{title}</CardTitle><small className="calendar-access-note">{calendar.account||expectedCalendarAccount}{calendar.connected?` · ${calendar.calendars} calendars synchronized`:" · public Railway sync"}</small></div><div className="calendar-actions"><span>{calendar.lastSync?`Updated ${new Intl.DateTimeFormat("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(calendar.lastSync)}`:"Automatic 60-second synchronization"}</span><Button size="sm" variant="outline" onClick={()=>void calendar.refresh()} disabled={calendar.loading}><RefreshCw className={calendar.loading?"spin":""}/>Refresh</Button></div></CardHeader><CardContent>{calendar.loading&&!calendar.events.length?<div className="calendar-loading"><RefreshCw className="spin"/>Synchronizing Google Calendar…</div>:calendar.error?<div className="calendar-setup"><CircleAlert/><div><strong>Calendar temporarily unavailable</strong><p>{calendar.error}</p></div><Button onClick={()=>void calendar.connect()}><RefreshCw/>Try again</Button></div>:content}</CardContent></Card>;
 }
 
 function WeeklyView({tasks,today,calendar,onOpenSettings}:{tasks:Task[];today:string;calendar:CalendarState;onOpenSettings:()=>void}){return <section className="page-stack"><PlannerWeekOverview today={today}/><TaskList title="Next 7 days" subtitle="MASTER TASKS and live Google Calendar activity in one weekly command view." tasks={tasks} today={today}/><GoogleCalendarPanel mode="WEEK" date={today} title="Live weekly schedule" calendar={calendar} onOpenSettings={onOpenSettings}/></section>}
