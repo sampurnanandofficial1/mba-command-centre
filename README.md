@@ -5,11 +5,15 @@ A high-tech, dark-themed personal productivity system for MBA tasks, habits, dea
 ## Live release
 
 - **GitHub Pages:** https://sampurnanandofficial1.github.io/mba-command-centre/
-- **Release:** v1.3.0 — Public Command Centre
-- **Released:** 30 September 2026
+- **Release:** v1.4.0 — Unified Daily Execution Planner
+- **Released:** 2 October 2026
 
 ## Latest updates
 
+- Merged Personal Routines into the daily Time Planner so there is one execution timeline instead of two separate panels.
+- Made every planner block checkable; personal-routine checks continue feeding habit analytics, while other blocks retain date-specific completion state.
+- Shifted the default 8-hour sleep window to 1:00 AM–9:00 AM and safely migrates browsers still holding the former 11:00 PM–7:00 AM default.
+- Updated meal rules so breakfast, lunch, snacks, and dinner may begin anywhere inside their mess windows and continue for the selected duration beyond the window end.
 - Added an editable daily Time Planner generated from the IIM Lucknow Term V class schedule.
 - Integrated the timetable into Today, Weekly View, and the monthly Calendar instead of keeping it as a separate destination.
 - Removed the portal password so the command centre opens directly on every browser.
