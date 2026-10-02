@@ -158,7 +158,7 @@ export function TimePlanner({ today, embedded = false, routines = [], routineSta
       }));
   };
   return (
-    <section className={`page-stack planner-page${embedded ? " planner-embedded" : ""}`}>
+    <section data-release="planner-v1.4.0" className={`page-stack planner-page${embedded ? " planner-embedded" : ""}`}>
       <div className="page-intro">
         <div>
           <span className="eyebrow">8–8–8 DAILY OPERATING SYSTEM</span>
