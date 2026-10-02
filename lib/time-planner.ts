@@ -165,11 +165,11 @@ export function generateDayPlan(date: string, settings: PlannerSettings) {
   const phaseIsCfa = date >= settings.phaseSwitchDate;
   const phaseMinutes = (phaseIsCfa ? settings.cfaHours : settings.caseHours) * 60;
   const phaseTitle = phaseIsCfa ? "CFA Level II preparation" : "Case competition";
-  const phaseUnscheduled = allocate(items, date, phaseTitle, phaseMinutes, "focus", phaseIsCfa ? "Daily from 11 October" : "Daily through 10 October", settings);
-  const workCapacity = Math.max(0, 8 * 60 - classMinutes - (phaseMinutes - phaseUnscheduled));
+  const workCapacity = Math.max(0, 8 * 60 - classMinutes - phaseMinutes);
   const recentSubjects = Array.from(new Set(Array.from({ length: 7 }, (_, i) => classesForDate(addDays(date, -i), settings).map((x) => x.title)).flat()));
   const studyTitle = recentSubjects.length ? `Self-study · ${recentSubjects.join(" / ")}` : "Academic self-study / task execution";
   const studyUnscheduled = allocate(items, date, studyTitle, workCapacity, "study", `${settings.studyHoursPerClass} hours owed per class; use this block against the oldest pending subject.`, settings);
+  const phaseUnscheduled = allocate(items, date, phaseTitle, phaseMinutes, "focus", phaseIsCfa ? "Daily from 11 October · evening priority" : "Daily through 10 October · evening priority", settings);
   items.sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
   const workMinutes = items.filter((x) => x.kind === "class" || x.kind === "study" || x.kind === "focus").reduce((s, x) => s + duration(x), 0);
   const rawSleep = toMin(settings.sleepEnd) - toMin(settings.sleepStart);
