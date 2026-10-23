@@ -323,8 +323,14 @@ function useGoogleCalendar(today: string): CalendarState {
     await sync();
   }, [sync]);
   const connect = React.useCallback(async () => {
-    await sync();
-  }, [sync]);
+    const accessCode = window.prompt("Enter the Google Calendar administrator access code:");
+    if (accessCode === null) return;
+    if (!accessCode.trim()) {
+      setError("Administrator access code is required to connect Google Calendar.");
+      return;
+    }
+    window.location.assign(`${calendarApiBase}/auth/google?access_code=${encodeURIComponent(accessCode.trim())}`);
+  }, []);
   const disconnect = React.useCallback(() => {
     setConnected(false);
     setAccount("");
@@ -909,8 +915,8 @@ function GoogleCalendarPanel({ mode, date, title, calendar, onOpenSettings }: { 
               <p>{calendar.error}</p>
             </div>
             <Button onClick={() => void calendar.connect()}>
-              <RefreshCw />
-              Try again
+              <ExternalLink />
+              Connect Google Calendar
             </Button>
           </div>
         ) : (
