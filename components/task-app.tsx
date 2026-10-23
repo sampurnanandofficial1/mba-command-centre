@@ -104,7 +104,7 @@ const categories = ["Case Competition", "Classes", "Exams", "Research", "Placeme
 const priorities = ["P0", "P1", "P2", "P3"];
 const statuses = ["Not Started", "In Progress", "Waiting", "Blocked", "Submitted", "Completed", "Cancelled"];
 const expectedCalendarAccount = "pgp41221@iiml.ac.in";
-const calendarApiBase = String((import.meta.env as unknown as Record<string, string | undefined>).VITE_CALENDAR_API_URL ?? "https://calendar-api-production-d886.up.railway.app").replace(/\/$/, "");
+const calendarApiBase = String((import.meta.env as unknown as Record<string, string | undefined>).VITE_CALENDAR_API_URL ?? "https://mba-calendar-api-aczjpccpla-el.a.run.app").replace(/\/$/, "");
 // The full 365-day, Dharma-centred rotation lives in lib/gita-quotes.ts.
 const nav: {
   group: string;
@@ -884,7 +884,7 @@ function GoogleCalendarPanel({ mode, date, title, calendar, onOpenSettings }: { 
           <CardTitle>{title}</CardTitle>
           <small className="calendar-access-note">
             {calendar.account || expectedCalendarAccount}
-            {calendar.connected ? ` · ${calendar.calendars} calendars synchronized` : " · public Railway sync"}
+            {calendar.connected ? ` · ${calendar.calendars} calendars synchronized` : " · Google Cloud Run sync"}
           </small>
         </div>
         <div className="calendar-actions">
