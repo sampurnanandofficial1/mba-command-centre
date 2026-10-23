@@ -749,6 +749,7 @@ function TodayView({ quote, today, dueToday, overdue, upcoming, top3, routineSta
           <p className="meaning">{quote[2]}</p>
         </div>
       </section>
+      <GoogleCalendarPanel mode="AGENDA" date={today} title="Today on Google Calendar" calendar={calendar} onOpenSettings={onOpenSettings} />
       <section className="kpi-strip">
         <Kpi label="Due today" value={String(dueToday.length)} tone="blue" />
         <Kpi label="Remaining" value={String(dueToday.length)} tone="amber" />
@@ -805,7 +806,6 @@ function TodayView({ quote, today, dueToday, overdue, upcoming, top3, routineSta
         </Card>
       </div>
       <TimePlanner today={today} embedded routines={routineDefinitions} routineState={routineState} onRoutine={onRoutine} onManageHabits={onManageHabits} />
-      <GoogleCalendarPanel mode="AGENDA" date={today} title="Today on Google Calendar" calendar={calendar} onOpenSettings={onOpenSettings} />
       <Card>
         <CardHeader>
           <CardTitle>Overdue</CardTitle>
