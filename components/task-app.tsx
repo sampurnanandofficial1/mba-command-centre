@@ -266,6 +266,21 @@ function calendarTime(value: string, allDay: boolean) {
     hour12: true,
   }).format(new Date(value));
 }
+function calendarEventDate(value: string) {
+  const day = calendarDate(value);
+  if (!day) return "";
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(day + "T12:00:00+05:30"));
+}
+function calendarEventTimeRange(event: CalendarEvent) {
+  if (event.allDay) return "All day";
+  return `${calendarTime(event.start, false)} – ${calendarTime(event.end, false)}`;
+}
 function startOfWeek(date: string) {
   const d = new Date(date + "T12:00:00Z");
   const day = d.getUTCDay();
@@ -830,7 +845,7 @@ function CalendarEventItem({ event }: { event: CalendarEvent }) {
   const content = (
     <>
       <span className="event-color" style={{ background: event.color }} />
-      <span className="event-time">{calendarTime(event.start, event.allDay)}</span>
+      <span className="event-time">{calendarEventDate(event.start)} · {calendarEventTimeRange(event)}</span>
       <strong>{event.title}</strong>
       <small>
         {event.calendarName}
