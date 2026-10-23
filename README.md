@@ -26,7 +26,7 @@ A high-tech, dark-themed personal productivity system for MBA tasks, habits, dea
 - Preserved the JARVIS interface, voice task capture, 365-day Dharma-focused Gita rotation, analytics, archive, and responsive mobile layout.
 - Added live daily, weekly, and monthly Google Calendar views for `pgp41221@iiml.ac.in`.
 - Made read-only Google Calendar views publicly available without a browser access code or Google sign-in.
-- Added a Railway OAuth backend with encrypted, persistent calendar credentials and automatic 60-second refresh.
+- Migrated the Google Calendar OAuth backend to Google Cloud Run, with encrypted credentials persisted in Google Cloud Storage and automatic token refresh.
 - Restored server-rendered Google Calendar events in Today, Weekly View, and Calendar; the temporary public iframe fallback is no longer used.
 - Google authorization remains a one-time administrator operation restricted to `pgp41221@iiml.ac.in`; visitors receive read-only event data directly.
 
