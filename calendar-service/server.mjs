@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { promises as fs } from "node:fs";
-import { dirname } from "node:path";
 import { createCipheriv, createDecipheriv, createHmac, createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { Storage } from "@google-cloud/storage";
 
 const PORT=Number(process.env.PORT||3000);
 const FRONTEND_URL=(process.env.FRONTEND_URL||"https://sampurnanandofficial1.github.io/mba-command-centre/").replace(/#.*$/,"");
@@ -13,6 +13,10 @@ const SESSION_SECRET=process.env.SESSION_SECRET||"";
 const ENCRYPTION_KEY=process.env.ENCRYPTION_KEY||"";
 const ACCESS_CODE=process.env.ACCESS_CODE||"";
 const CONNECTION_FILE=process.env.CONNECTION_FILE||"/data/google-connection.enc";
+const CONNECTION_BUCKET=process.env.CONNECTION_BUCKET||"";
+const CONNECTION_OBJECT=process.env.CONNECTION_OBJECT||"google-connection.enc";
+const storage=CONNECTION_BUCKET ? new Storage() : null;
+const connectionObject=storage ? storage.bucket(CONNECTION_BUCKET).file(CONNECTION_OBJECT) : null;
 const EXPECTED_EMAIL="pgp41221@iiml.ac.in";
 const SCOPES="openid email https://www.googleapis.com/auth/calendar.readonly";
 const key=createHash("sha256").update(ENCRYPTION_KEY).digest();
@@ -29,8 +33,8 @@ function signState(payload){const data=b64(JSON.stringify(payload));const signat
 function readState(value){const [data,signature]=String(value||"").split(".");if(!data||!signature)throw new Error("Invalid OAuth state");const expected=createHmac("sha256",SESSION_SECRET).update(data).digest();const actual=unb64(signature);if(actual.length!==expected.length||!timingSafeEqual(actual,expected))throw new Error("Invalid OAuth state");const payload=JSON.parse(unb64(data).toString("utf8"));if(Date.now()-Number(payload.issuedAt)>10*60*1000)throw new Error("OAuth state expired");return payload}
 function encrypt(payload){const iv=randomBytes(12);const cipher=createCipheriv("aes-256-gcm",key,iv);const encrypted=Buffer.concat([cipher.update(JSON.stringify(payload),"utf8"),cipher.final()]);return `${b64(iv)}.${b64(encrypted)}.${b64(cipher.getAuthTag())}`}
 function decrypt(value){const [iv,ciphertext,tag]=String(value||"").split(".");if(!iv||!ciphertext||!tag)throw new Error("Invalid secure payload");const decipher=createDecipheriv("aes-256-gcm",key,unb64(iv));decipher.setAuthTag(unb64(tag));return JSON.parse(Buffer.concat([decipher.update(unb64(ciphertext)),decipher.final()]).toString("utf8"))}
-async function saveConnection(payload){await fs.mkdir(dirname(CONNECTION_FILE),{recursive:true});await fs.writeFile(CONNECTION_FILE,encrypt(payload),{encoding:"utf8",mode:0o600})}
-async function loadConnection(){try{const value=await fs.readFile(CONNECTION_FILE,"utf8");const connection=decrypt(value.trim());if(connection.email!==EXPECTED_EMAIL||!connection.refreshToken)throw new Error("Stored Google connection is invalid");return connection}catch(error){if(error?.code==="ENOENT")throw new Error("Google Calendar administrator setup is incomplete");throw error}}
+async function saveConnection(payload){const value=encrypt(payload);if(connectionObject){await connectionObject.save(value,{contentType:"text/plain",metadata:{cacheControl:"no-store"}});return}await fs.writeFile(CONNECTION_FILE,value,{encoding:"utf8",mode:0o600})}
+async function loadConnection(){try{let value;if(connectionObject){const [contents]=await connectionObject.download();value=contents.toString("utf8")}else{value=await fs.readFile(CONNECTION_FILE,"utf8")}const connection=decrypt(value.trim());if(connection.email!==EXPECTED_EMAIL||!connection.refreshToken)throw new Error("Stored Google connection is invalid");return connection}catch(error){if(error?.code==="ENOENT"||error?.code===404||error?.code===403){if(error?.code===403)throw error;throw new Error("Google Calendar administrator setup is incomplete")}throw error}}
 async function tokenRequest(params){const response=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:new URLSearchParams(params)});const data=await response.json();if(!response.ok)throw new Error(data.error_description||data.error||"Google token exchange failed");return data}
 async function userInfo(accessToken){const response=await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{authorization:`Bearer ${accessToken}`}});const data=await response.json();if(!response.ok)throw new Error("Google identity verification failed");return data}
 async function activeConnection(connection){if(connection.accessToken&&Number(connection.accessExpiresAt)>Date.now()+60_000)return connection;const token=await tokenRequest({client_id:GOOGLE_CLIENT_ID,client_secret:GOOGLE_CLIENT_SECRET,refresh_token:connection.refreshToken,grant_type:"refresh_token"});const active={...connection,accessToken:token.access_token,accessExpiresAt:Date.now()+Number(token.expires_in||3600)*1000};await saveConnection(active);return active}
